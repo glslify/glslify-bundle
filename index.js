@@ -1,4 +1,5 @@
 var tokenize = require('glsl-tokenizer/string')
+var defines  = require('glsl-token-defines')
 var descope  = require('glsl-token-descope')
 var string   = require('glsl-token-string')
 var scope    = require('glsl-token-scope')
@@ -74,9 +75,11 @@ Bundle.prototype.bundle = function(dep) {
       var targetTokens = targetBundle.tokens
       var targetExport = targetBundle.exports
       var targetIndex  = tokens.indexOf(token)
+      var targetDefs   = defines(targetTokens)
 
       descope(targetTokens, function(local, token) {
         if ('module' in token) return local
+        if (targetDefs[local]) return local
         if (maps && maps[local]) return maps[local]
 
         // Give each variable in the required GLSL module
