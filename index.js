@@ -52,9 +52,13 @@ Bundle.prototype.bundle = function(dep) {
       tokens.splice(i--, 1)
     } else
     if (imported) {
-      var name   = imported[1]
-      var maps   = imported[2].split(/\s?,\s?/g)
-      var path   = maps.shift()
+      var name = imported[1]
+      var maps = imported[2].split(/\s?,\s?/g)
+      var path = maps.shift()
+        .trim()
+        .replace(/^'|'$/g, '')
+        .replace(/^"|"$/g, '')
+
       var target = this.depIndex[dep.deps[path]]
 
       maps = toMapping(maps)

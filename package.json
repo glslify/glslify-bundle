@@ -21,7 +21,7 @@
     "glsl-tokenizer": "^2.0.0"
   },
   "devDependencies": {
-    "glslify-deps": "^1.0.3",
+    "glslify-deps": "^1.2.1",
     "tape": "^3.5.0"
   },
   "repository": {
