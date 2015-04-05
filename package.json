@@ -18,7 +18,7 @@
     "glsl-token-descope": "^1.0.2",
     "glsl-token-scope": "^1.1.1",
     "glsl-token-string": "^1.0.1",
-    "glsl-tokenizer": "^2.0.0"
+    "glsl-tokenizer": "^2.0.2"
   },
   "devDependencies": {
     "glslify-deps": "^1.2.1",
