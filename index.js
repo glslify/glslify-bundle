@@ -1,4 +1,5 @@
 var tokenize = require('glsl-tokenizer/string')
+var inject   = require('glsl-inject-defines')
 var defines  = require('glsl-token-defines')
 var descope  = require('glsl-token-descope')
 var string   = require('glsl-token-string')
@@ -6,7 +7,9 @@ var scope    = require('glsl-token-scope')
 var depth    = require('glsl-token-depth')
 
 module.exports = function(deps) {
-  return '#define GLSLIFY 1\n\n' + Bundle(deps).src
+  return inject(Bundle(deps).src, {
+    GLSLIFY: 1
+  })
 }
 
 function Bundle(deps) {

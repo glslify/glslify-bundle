@@ -13,6 +13,7 @@
     "url": "http://hughsk.io/"
   },
   "dependencies": {
+    "glsl-inject-defines": "^1.0.1",
     "glsl-token-defines": "^1.0.0",
     "glsl-token-depth": "^1.1.1",
     "glsl-token-descope": "^1.0.2",
