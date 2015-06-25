@@ -5,11 +5,21 @@ var descope  = require('glsl-token-descope')
 var string   = require('glsl-token-string')
 var scope    = require('glsl-token-scope')
 var depth    = require('glsl-token-depth')
+var btoa     = require('btoa-lite')
 
 module.exports = function(deps) {
-  return inject(Bundle(deps).src, {
+  var defs = {
     GLSLIFY: 1
-  })
+  }
+
+  for (var i = 0; i < deps.length; i++) {
+    if (deps[i].entry && deps[i].file) {
+      defs.SHADER_NAME_B64 = btoa(deps[i].file)
+      break
+    }
+  }
+
+  return inject(Bundle(deps).src, defs)
 }
 
 function Bundle(deps) {
