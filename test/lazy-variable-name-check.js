@@ -1,15 +1,14 @@
-var deps   = require('glslify-deps')
-var test   = require('tape')
-var path   = require('path')
+var deps = require('glslify-deps')
+var test = require('tape')
+var path = require('path')
 var bundle = require('../')
-var fs     = require('fs')
 
 var fixture = path.resolve(__dirname, '..', 'fixtures', 'basic.glsl')
 
-test('lazy variable rename check', function(t) {
+test('lazy variable rename check', function (t) {
   var depper = deps()
 
-  depper.add(fixture, function(err, modules) {
+  depper.add(fixture, function (err, modules) {
     if (err) return t.ifError(err)
 
     var src = bundle(modules)

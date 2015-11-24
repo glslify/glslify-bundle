@@ -1,20 +1,19 @@
 var tokenize = require('glsl-tokenizer')
-var deps     = require('glslify-deps')
-var test     = require('tape')
-var path     = require('path')
-var bundle   = require('../')
-var fs       = require('fs')
+var deps = require('glslify-deps')
+var test = require('tape')
+var path = require('path')
+var bundle = require('../')
 
 var fixture = path.resolve(__dirname, '..', 'fixtures', 'version.glsl')
 
-test('lazy variable rename check', function(t) {
+test('lazy variable rename check', function (t) {
   var depper = deps()
 
-  depper.add(fixture, function(err, modules) {
+  depper.add(fixture, function (err, modules) {
     if (err) return t.ifError(err)
 
-    var src    = bundle(modules)
-    var tokens = tokenize(src).filter(function(d) {
+    var src = bundle(modules)
+    var tokens = tokenize(src).filter(function (d) {
       return d.type !== 'whitespace'
     })
 

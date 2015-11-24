@@ -1,28 +1,28 @@
 var tokenize = require('glsl-tokenizer/string')
-var inject   = require('glsl-inject-defines')
-var defines  = require('glsl-token-defines')
-var descope  = require('glsl-token-descope')
-var string   = require('glsl-token-string')
-var scope    = require('glsl-token-scope')
-var depth    = require('glsl-token-depth')
+var inject = require('glsl-inject-defines')
+var defines = require('glsl-token-defines')
+var descope = require('glsl-token-descope')
+var string = require('glsl-token-string')
+var scope = require('glsl-token-scope')
+var depth = require('glsl-token-depth')
 var topoSort = require('./lib/topo-sort')
 
-module.exports = function(deps) {
+module.exports = function (deps) {
   return inject(Bundle(deps).src, {
     GLSLIFY: 1
   })
 }
 
-function Bundle(deps) {
+function Bundle (deps) {
   if (!(this instanceof Bundle)) return new Bundle(deps)
 
-  //Reorder dependencies topologically
+  // Reorder dependencies topologically
   deps = topoSort(deps)
 
-  this.depList    = deps
-  this.depIndex   = indexBy(deps, 'id')
-  this.exported   = {}
-  this.cache      = {}
+  this.depList = deps
+  this.depIndex = indexBy(deps, 'id')
+  this.exported = {}
+  this.cache = {}
   this.varCounter = 0
 
   this.src = []
@@ -38,9 +38,9 @@ function Bundle(deps) {
   this.src = string(this.src)
 }
 
-Bundle.prototype.bundle = function(dep) {
-  var tokens  = tokenize(dep.source)
-  var self    = this
+Bundle.prototype.bundle = function (dep) {
+  var tokens = tokenize(dep.source)
+  var self = this
   var imports = []
   var exports = null
 
@@ -58,8 +58,7 @@ Bundle.prototype.bundle = function(dep) {
     if (exported) {
       exports = exported[1]
       tokens.splice(i--, 1)
-    } else
-    if (imported) {
+    } else if (imported) {
       var name = imported[1]
       var maps = imported[2].split(/\s?,\s?/g)
       var path = maps.shift()
@@ -86,10 +85,10 @@ Bundle.prototype.bundle = function(dep) {
       var targetBundle = target.bundle
       var targetTokens = targetBundle.tokens
       var targetExport = targetBundle.exports
-      var targetIndex  = tokens.indexOf(token)
-      var targetDefs   = defines(targetTokens)
+      var targetIndex = tokens.indexOf(token)
+      var targetDefs = defines(targetTokens)
 
-      descope(targetTokens, function(local, token) {
+      descope(targetTokens, function (local, token) {
         if ('module' in token) return local
         if (targetDefs[local]) return local
         if (maps && maps[local]) return maps[local]
@@ -104,7 +103,9 @@ Bundle.prototype.bundle = function(dep) {
         // that we can share them across files and refer
         // to the same function/struct/value.
         if (targetExport === local) {
-          return self.cache[target.id] = self.cache[target.id] || name
+          return (
+            self.cache[target.id] = self.cache[target.id] || name
+          )
         }
 
         return name
@@ -124,11 +125,11 @@ Bundle.prototype.bundle = function(dep) {
     }
   }
 
-  tokens.forEach(function(token) {
+  tokens.forEach(function (token) {
     if (token.type !== 'ident') return
     if ('module' in token) return
 
-    imports.forEach(function(imported) {
+    imports.forEach(function (imported) {
       if (imported.name !== token.data) return
       token.data = self.cache[imported.target.id]
     })
@@ -140,34 +141,34 @@ Bundle.prototype.bundle = function(dep) {
   }
 }
 
-function glslifyPreprocessor(data) {
+function glslifyPreprocessor (data) {
   return /#pragma glslify:/.test(data)
 }
 
-function glslifyExport(data) {
+function glslifyExport (data) {
   return /#pragma glslify:\s*export\(([^\)]+)\)/.exec(data)
 }
 
-function glslifyImport(data) {
+function glslifyImport (data) {
   return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^\)]+)\)/.exec(data)
 }
 
-function indexBy(deps, key) {
-  return deps.reduce(function(deps, entry) {
+function indexBy (deps, key) {
+  return deps.reduce(function (deps, entry) {
     deps[entry[key]] = entry
     return deps
   }, {})
 }
 
-function toMapping(maps) {
+function toMapping (maps) {
   if (!maps) return false
 
-  return maps.reduce(function(mapping, defn) {
+  return maps.reduce(function (mapping, defn) {
     defn = defn.split(/\s?=\s?/g)
 
     var expr = defn.pop()
 
-    defn.forEach(function(key) {
+    defn.forEach(function (key) {
       mapping[key] = expr
     })
 
