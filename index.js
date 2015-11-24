@@ -18,7 +18,7 @@ function Bundle(deps) {
 
   //Reorder dependencies topologically
   deps = topoSort(deps)
-  
+
   this.depList    = deps
   this.depIndex   = indexBy(deps, 'id')
   this.exported   = {}
