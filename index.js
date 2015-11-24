@@ -1,3 +1,4 @@
+var trim = require('glsl-token-whitespace-trim')
 var tokenize = require('glsl-tokenizer/string')
 var inject = require('glsl-inject-defines')
 var defines = require('glsl-token-defines')
@@ -30,12 +31,16 @@ function Bundle (deps) {
   for (var i = 0; i < deps.length; i++) {
     var dep = deps[i]
     dep.bundle = this.bundle(dep)
+    var eof = dep.bundle.tokens[dep.bundle.tokens.length - 1]
+    if (eof && eof.type === 'eof') {
+      dep.bundle.tokens.splice(-1)
+    }
     if (dep.entry) {
       this.src = this.src.concat(dep.bundle.tokens)
     }
   }
 
-  this.src = string(this.src)
+  this.src = string(trim(this.src))
 }
 
 Bundle.prototype.bundle = function (dep) {
