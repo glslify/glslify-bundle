@@ -20,10 +20,10 @@ test('complex but valid shader', function(t) {
     } catch (e) {
       console.error(src)
       t.fail(e.message)
-    } finally {
-      t.pass('shader complied successfully')
+      return t.end()
     }
 
+    t.pass('shader complied successfully')
     t.end()
   })
 })
