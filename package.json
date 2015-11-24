@@ -22,6 +22,8 @@
     "glsl-tokenizer": "^2.0.2"
   },
   "devDependencies": {
+    "gl": "^2.1.5",
+    "gl-shader": "^4.0.6",
     "glslify-deps": "^1.2.1",
     "tape": "^3.5.0"
   },

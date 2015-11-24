@@ -5,6 +5,7 @@ var descope  = require('glsl-token-descope')
 var string   = require('glsl-token-string')
 var scope    = require('glsl-token-scope')
 var depth    = require('glsl-token-depth')
+var topoSort = require('./lib/topo-sort')
 
 module.exports = function(deps) {
   return inject(Bundle(deps).src, {
@@ -14,6 +15,9 @@ module.exports = function(deps) {
 
 function Bundle(deps) {
   if (!(this instanceof Bundle)) return new Bundle(deps)
+
+  //Reorder dependencies topologically
+  deps = topoSort(deps)
 
   this.depList    = deps
   this.depIndex   = indexBy(deps, 'id')
@@ -25,8 +29,9 @@ function Bundle(deps) {
 
   for (var i = 0; i < deps.length; i++) {
     var dep = deps[i]
+    dep.bundle = this.bundle(dep)
     if (dep.entry) {
-      this.src = this.src.concat(this.bundle(dep).tokens)
+      this.src = this.src.concat(dep.bundle.tokens)
     }
   }
 
@@ -78,7 +83,7 @@ Bundle.prototype.bundle = function(dep) {
         continue
       }
 
-      var targetBundle = this.bundle(target)
+      var targetBundle = target.bundle
       var targetTokens = targetBundle.tokens
       var targetExport = targetBundle.exports
       var targetIndex  = tokens.indexOf(token)
