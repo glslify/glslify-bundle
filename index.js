@@ -6,6 +6,7 @@ var descope = require('glsl-token-descope')
 var string = require('glsl-token-string')
 var scope = require('glsl-token-scope')
 var depth = require('glsl-token-depth')
+var hash = require('murmurhash-js')
 var topoSort = require('./lib/topo-sort')
 
 module.exports = function (deps) {
@@ -29,21 +30,21 @@ function Bundle (deps) {
   this.src = []
 
   for (var i = 0; i < deps.length; i++) {
-    var dep = deps[i]
-    dep.bundle = this.bundle(dep)
-    var eof = dep.bundle.tokens[dep.bundle.tokens.length - 1]
-    if (eof && eof.type === 'eof') {
-      dep.bundle.tokens.splice(-1)
-    }
-    if (dep.entry) {
-      this.src = this.src.concat(dep.bundle.tokens)
+    this.preprocess(deps[i])
+  }
+
+  for (var i = 0; i < deps.length; i++) {
+    if (deps[i].entry) {
+      this.src = this.src.concat(this.bundle(deps[i]))
     }
   }
 
   this.src = string(trim(this.src))
 }
 
-Bundle.prototype.bundle = function (dep) {
+var proto = Bundle.prototype
+
+proto.preprocess = function(dep) {
   var tokens = tokenize(dep.source)
   var self = this
   var imports = []
@@ -54,7 +55,7 @@ Bundle.prototype.bundle = function (dep) {
 
   for (var i = 0; i < tokens.length; i++) {
     var token = tokens[i]
-    if (token.type !== 'preprocessor') continue
+    if (token.type !== 'preprocessor')    continue
     if (!glslifyPreprocessor(token.data)) continue
 
     var exported = glslifyExport(token.data)
@@ -70,80 +71,105 @@ Bundle.prototype.bundle = function (dep) {
         .trim()
         .replace(/^'|'$/g, '')
         .replace(/^"|"$/g, '')
-
       var target = this.depIndex[dep.deps[path]]
-
-      maps = toMapping(maps)
-
-      if (!target) throw new Error('Could not find module: "' + path + '"')
-
       imports.push({
-        name: name,
-        target: target
+        name:   name,
+        path:   path,
+        target: target,
+        maps:   toMapping(maps),
+        index:  i
       })
-
-      if (self.cache[target.id]) {
-        tokens.splice(i--, 1)
-        continue
-      }
-
-      var targetBundle = target.bundle
-      var targetTokens = targetBundle.tokens
-      var targetExport = targetBundle.exports
-      var targetIndex = tokens.indexOf(token)
-      var targetDefs = defines(targetTokens)
-
-      descope(targetTokens, function (local, token) {
-        if ('module' in token) return local
-        if (targetDefs[local]) return local
-        if (maps && maps[local]) return maps[local]
-
-        // Give each variable in the required GLSL module
-        // a new name unique to the module. This prevents
-        // variable name conflicts between modules, in the
-        // same way you get with node/browserify.
-        var name = [local, target.id, self.varCounter++].join('_')
-
-        // Keep a cache of exported variable names, such
-        // that we can share them across files and refer
-        // to the same function/struct/value.
-        if (targetExport === local) {
-          return (
-            self.cache[target.id] = self.cache[target.id] || name
-          )
-        }
-
-        return name
-      })
-
-      for (var j = 0; j < targetTokens.length; j++) {
-        if ('module' in token) continue
-        targetTokens[j].module = target.id
-      }
-
-      tokens = []
-        .concat(tokens.slice(0, targetIndex))
-        .concat(targetTokens)
-        .concat(tokens.slice(targetIndex + 1))
-
-      i += targetTokens.length
+      tokens.splice(i--, 1)
     }
   }
 
-  tokens.forEach(function (token) {
-    if (token.type !== 'ident') return
-    if ('module' in token) return
-
-    imports.forEach(function (imported) {
-      if (imported.name !== token.data) return
-      token.data = self.cache[imported.target.id]
-    })
-  })
-
-  return {
-    tokens: tokens,
-    exports: exports
+  var eof = tokens[tokens.length - 1]
+  if (eof && eof.type === 'eof') {
+    tokens.pop()
   }
+
+  if (dep.entry) {
+    exports = exports || 'main'
+  }
+
+  if (!exports) {
+    throw new Error(dep.file + ' does not export any symbols')
+  }
+
+  dep.parsed = {
+    tokens:   tokens,
+    imports:  imports,
+    exports:  exports
+  }
+}
+
+proto.bundle = function (entry) {
+  var resolved = {}
+  var src      = []
+
+  function resolve (dep, bindings) {
+    //Compute suffix for module
+    bindings.sort()
+    var ident = bindings.join(':') + ':' + dep.id
+    var suffix = '_' + hash(ident)
+
+    if(dep.entry) {
+      suffix = ''
+    }
+
+    //Test if export is already resolved
+    var exportName = dep.parsed.exports + suffix
+    if(resolved[exportName]) {
+      return [exportName, []]
+    }
+
+    //Initialize map for variable renamings based on bindings
+    var rename = {}
+    for(var i=0; i<bindings.length; ++i) {
+      var binding = bindings[i]
+      rename[binding[0]] = binding[1]
+    }
+
+    //Resolve all dependencies
+    var imports = dep.parsed.imports
+    var edits = []
+    for(var i=0; i<imports.length; ++i) {
+      var data = imports[i]
+
+      var importMaps   = data.maps
+      var importName   = data.name
+      var importTarget = data.target
+
+      var importBindings = Object.keys(importMaps).map(function(name) {
+        var x = importMaps[name]
+        return [name, rename[x] || (x + suffix)]
+      })
+
+      var importTokens = resolve(importTarget, importBindings)
+      rename[importName] = importTokens[0]
+      edits.push([data.index, importTokens[1]])
+    }
+
+    //Rename tokens
+    var parsedTokens = dep.parsed.tokens.map(cloneToken)
+    var tokens = descope(parsedTokens, function(local, token) {
+      return rename[local] || (local + suffix)
+    })
+
+    //Insert edits
+    edits.sort(function(a,b) { return b[0]-a[0] })
+    for (var i=0; i<edits.length; ++i) {
+      var edit = edits[i]
+      tokens = tokens.slice(0, edit[0])
+        .concat(edit[1])
+        .concat(tokens.slice(edit[0]))
+    }
+
+    resolved[exportName] = true
+    return [exportName, tokens]
+  }
+
+  return (resolve(entry, []))[1]
 }
 
 function glslifyPreprocessor (data) {
@@ -179,4 +205,8 @@ function toMapping (maps) {
 
     return mapping
   }, {})
+}
+
+function cloneToken(token) {
+  return JSON.parse(JSON.stringify(token))
 }

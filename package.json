@@ -20,7 +20,8 @@
     "glsl-token-scope": "^1.1.1",
     "glsl-token-string": "^1.0.1",
     "glsl-token-whitespace-trim": "^1.0.0",
-    "glsl-tokenizer": "^2.0.2"
+    "glsl-tokenizer": "^2.0.2",
+    "murmurhash-js": "^1.0.0"
   },
   "devDependencies": {
     "gl": "^2.1.5",
