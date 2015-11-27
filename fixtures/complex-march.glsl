@@ -18,11 +18,15 @@ RayResult march(Ray source, float maxd, float precis) {
     dist += res.d;
   }
 
-  return dist >= maxd
-    ? rayBail();
-    : res
+  if(dist >= maxd) {
+    return rayBail();
+  }
+
+  return res;
 }
 
-Ray march(Ray ray) {
+RayResult march(Ray ray) {
   return march(ray, 20.0, 0.001);
 }
+
+#pragma glslify: export(march)

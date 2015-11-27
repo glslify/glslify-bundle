@@ -19,7 +19,7 @@ void main() {
   vec3 rd = normalize(vec3(1));
   vec3 ro = vec3(0);
 
-  RayResult t = Ray(ro, rd);
+  RayResult t = march(Ray(ro, rd));
 
   if (t.hit) {
     color = vec3(t.d);
