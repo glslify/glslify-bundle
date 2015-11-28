@@ -152,7 +152,11 @@ proto.bundle = function (entry) {
 
     //Rename tokens
     var parsedTokens = dep.parsed.tokens.map(cloneToken)
+    var parsedDefs = defines(parsedTokens)
     var tokens = descope(parsedTokens, function(local, token) {
+      if (parsedDefs[local]) {
+        return local
+      }
       return rename[local] || (local + suffix)
     })
 
