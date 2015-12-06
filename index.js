@@ -1,3 +1,6 @@
+/*eslint-disable no-redeclare */
+
+var hash = require('murmurhash-js/murmurhash3_gc')
 var trim = require('glsl-token-whitespace-trim')
 var tokenize = require('glsl-tokenizer/string')
 var inject = require('glsl-inject-defines')
@@ -6,8 +9,8 @@ var descope = require('glsl-token-descope')
 var string = require('glsl-token-string')
 var scope = require('glsl-token-scope')
 var depth = require('glsl-token-depth')
-var hash = require('murmurhash-js')
 var topoSort = require('./lib/topo-sort')
+var copy = require('shallow-copy')
 
 module.exports = function (deps) {
   return inject(Bundle(deps).src, {
@@ -44,9 +47,8 @@ function Bundle (deps) {
 
 var proto = Bundle.prototype
 
-proto.preprocess = function(dep) {
+proto.preprocess = function (dep) {
   var tokens = tokenize(dep.source)
-  var self = this
   var imports = []
   var exports = null
 
@@ -55,7 +57,7 @@ proto.preprocess = function(dep) {
 
   for (var i = 0; i < tokens.length; i++) {
     var token = tokens[i]
-    if (token.type !== 'preprocessor')    continue
+    if (token.type !== 'preprocessor') continue
     if (!glslifyPreprocessor(token.data)) continue
 
     var exported = glslifyExport(token.data)
@@ -73,11 +75,11 @@ proto.preprocess = function(dep) {
         .replace(/^"|"$/g, '')
       var target = this.depIndex[dep.deps[path]]
       imports.push({
-        name:   name,
-        path:   path,
+        name: name,
+        path: path,
         target: target,
-        maps:   toMapping(maps),
-        index:  i
+        maps: toMapping(maps),
+        index: i
       })
       tokens.splice(i--, 1)
     }
@@ -97,50 +99,52 @@ proto.preprocess = function(dep) {
   }
 
   dep.parsed = {
-    tokens:   tokens,
-    imports:  imports,
-    exports:  exports
+    tokens: tokens,
+    imports: imports,
+    exports: exports
   }
 }
 
 proto.bundle = function (entry) {
   var resolved = {}
-  var src      = []
+  var result = resolve(entry, [])[1]
+
+  return result
 
   function resolve (dep, bindings) {
-    //Compute suffix for module
+    // Compute suffix for module
     bindings.sort()
     var ident = bindings.join(':') + ':' + dep.id
     var suffix = '_' + hash(ident)
 
-    if(dep.entry) {
+    if (dep.entry) {
       suffix = ''
     }
 
-    //Test if export is already resolved
+    // Test if export is already resolved
     var exportName = dep.parsed.exports + suffix
-    if(resolved[exportName]) {
+    if (resolved[exportName]) {
       return [exportName, []]
     }
 
-    //Initialize map for variable renamings based on bindings
+    // Initialize map for variable renamings based on bindings
     var rename = {}
-    for(var i=0; i<bindings.length; ++i) {
+    for (var i = 0; i < bindings.length; ++i) {
       var binding = bindings[i]
       rename[binding[0]] = binding[1]
     }
 
-    //Resolve all dependencies
+    // Resolve all dependencies
     var imports = dep.parsed.imports
     var edits = []
-    for(var i=0; i<imports.length; ++i) {
+    for (var i = 0; i < imports.length; ++i) {
       var data = imports[i]
 
-      var importMaps   = data.maps
-      var importName   = data.name
+      var importMaps = data.maps
+      var importName = data.name
       var importTarget = data.target
 
-      var importBindings = Object.keys(importMaps).map(function(name) {
+      var importBindings = Object.keys(importMaps).map(function (name) {
         var x = importMaps[name]
         return [name, rename[x] || (x + suffix)]
       })
@@ -150,19 +154,22 @@ proto.bundle = function (entry) {
       edits.push([data.index, importTokens[1]])
     }
 
-    //Rename tokens
-    var parsedTokens = dep.parsed.tokens.map(cloneToken)
+    // Rename tokens
+    var parsedTokens = dep.parsed.tokens.map(copy)
     var parsedDefs = defines(parsedTokens)
-    var tokens = descope(parsedTokens, function(local, token) {
-      if (parsedDefs[local]) {
-        return local
-      }
-      return rename[local] || (local + suffix)
+    var tokens = descope(parsedTokens, function (local, token) {
+      if (parsedDefs[local]) return local
+      if (rename[local]) return rename[local]
+
+      return local + suffix
     })
 
-    //Insert edits
-    edits.sort(function(a,b) { return b[0]-a[0] })
-    for (var i=0; i<edits.length; ++i) {
+    // Insert edits
+    edits.sort(function (a, b) {
+      return b[0] - a[0]
+    })
+
+    for (var i = 0; i < edits.length; ++i) {
       var edit = edits[i]
       tokens = tokens.slice(0, edit[0])
         .concat(edit[1])
@@ -172,8 +179,6 @@ proto.bundle = function (entry) {
     resolved[exportName] = true
     return [exportName, tokens]
   }
-
-  return (resolve(entry, []))[1]
 }
 
 function glslifyPreprocessor (data) {
@@ -209,8 +214,4 @@ function toMapping (maps) {
 
     return mapping
   }, {})
-}
-
-function cloneToken(token) {
-  return JSON.parse(JSON.stringify(token))
 }
