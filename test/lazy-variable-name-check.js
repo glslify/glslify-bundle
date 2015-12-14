@@ -14,8 +14,9 @@ test('lazy variable rename check', function (t) {
     var src = bundle(modules)
 
     t.equal(src.match(/uVec/g).length, 3, '3 occurences of uVec')
-    t.equal(src.match(/uVec\.x/g).length, 2, '2 occurences of uVec.x')
-    t.notOk(src.match(/uVec\.x_/g), 'uVec.x did not get suffixed')
+    t.equal(src.match(/uVec_\d+/g).length, 2, '2 occurences of uVec_*')
+    t.equal(src.match(/uVec_\d+\.x/g).length, 2, '2 occurences of uVec_*.x')
+    t.notOk(src.match(/uVec_\d+\.x_/g), 'uVec_*.x did not get suffixed')
     t.equal(src.match(/Light_\d+/g).length, 7, '7 occurences of Light_*')
     t.equal(src.match(/alongside_\d+/g).length, 2, '2 occurences of alongside_*')
     t.equal(src.match(/another_\d+/g).length, 4, '4 occurences of another_*')
