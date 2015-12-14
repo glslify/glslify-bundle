@@ -144,9 +144,22 @@ proto.bundle = function (entry) {
       var importName = data.name
       var importTarget = data.target
 
-      var importBindings = Object.keys(importMaps).map(function (name) {
-        var x = importMaps[name]
-        return [name, rename[x] || (x + suffix)]
+      var importBindings = Object.keys(importMaps).map(function (id) {
+        var value = importMaps[id]
+
+        // floats/ints should not be renamed
+        if (value.match(/^\d+(?:\.\d+?)?$/g)) {
+          return [id, value]
+        }
+
+        // properties (uVec.x, ray.origin, ray.origin.xy etc.) should
+        // have their host identifiers renamed
+        var parent = value.match(/^([^\.]+)\.(.+)$/)
+        if (parent) {
+          return [id, (rename[parent[1]] || (parent[1] + suffix)) + '.' + parent[2]]
+        }
+
+        return [id, rename[value] || (value + suffix)]
       })
 
       var importTokens = resolve(importTarget, importBindings)
