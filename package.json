@@ -1,6 +1,6 @@
 {
   "name": "glslify-bundle",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Bundle a glslify-deps dependency tree into a GLSL source string",
   "main": "index.js",
   "license": "MIT",
