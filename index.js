@@ -6,6 +6,7 @@ var tokenize = require('glsl-tokenizer/string')
 var inject = require('glsl-inject-defines')
 var defines = require('glsl-token-defines')
 var descope = require('glsl-token-descope')
+var clean = require('./lib/clean-suffixes')
 var string = require('glsl-token-string')
 var scope = require('glsl-token-scope')
 var depth = require('glsl-token-depth')
@@ -42,7 +43,8 @@ function Bundle (deps) {
     }
   }
 
-  this.src = string(trim(this.src))
+  this.src = string(this.src)
+  this.src = string(clean(trim(tokenize(this.src))))
 }
 
 var proto = Bundle.prototype
