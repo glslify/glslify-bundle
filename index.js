@@ -16,6 +16,7 @@ var copy = require('shallow-copy')
 // Mock glsl-token-string
 // as it doesn't support sourcemaps
 const sourceMap = require('source-map')
+const convert = require('convert-source-map');
 const string = (tokens) => {
   const output = [];
   const map = new sourceMap.SourceMapGenerator();
@@ -47,8 +48,11 @@ const string = (tokens) => {
       (column + token.data.length)
   })
 
-  console.log(map.toString())
-  return output.join('');
+  const src = output.join('')
+  const mapJSON = map.toString()
+  const mapComment = convert.fromJSON(mapJSON).toComment()
+
+  return src + '\n' + mapComment
 }
 
 module.exports = function (deps, opts) {
