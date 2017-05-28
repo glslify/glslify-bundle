@@ -29,6 +29,7 @@
     "gl-shader": "^4.0.6",
     "glslify-deps": "^1.2.1",
     "standard": "^5.4.1",
+    "tap-spec": "^4.1.1",
     "tape": "^3.5.0"
   },
   "repository": {
