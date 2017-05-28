@@ -22,7 +22,8 @@
     "glsl-token-whitespace-trim": "^1.0.0",
     "glsl-tokenizer": "^2.0.2",
     "murmurhash-js": "^1.0.0",
-    "shallow-copy": "0.0.1"
+    "shallow-copy": "0.0.1",
+    "source-map": "^0.5.6"
   },
   "devDependencies": {
     "gl": "^4.0.3",
