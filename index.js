@@ -7,16 +7,59 @@ var inject = require('glsl-inject-defines')
 var defines = require('glsl-token-defines')
 var descope = require('glsl-token-descope')
 var clean = require('./lib/clean-suffixes')
-var string = require('glsl-token-string')
+// var string = require('glsl-token-string')
 var scope = require('glsl-token-scope')
 var depth = require('glsl-token-depth')
 var topoSort = require('./lib/topo-sort')
 var copy = require('shallow-copy')
 
-module.exports = function (deps) {
-  return inject(Bundle(deps).src, {
-    GLSLIFY: 1
+// Mock glsl-token-string
+// as it doesn't support sourcemaps
+const sourceMap = require('source-map')
+const convert = require('convert-source-map');
+const string = (tokens) => {
+  const output = [];
+  const map = new sourceMap.SourceMapGenerator();
+
+  let line = 1
+  let column = 1
+
+  tokens.forEach(token => {
+    if (token.type === 'eof') return
+
+    output.push(token.data)
+
+    map.addMapping({
+      source: token.source,
+      original: {
+        line: token.original.line,
+        column: token.original.column,
+      },
+      generated: {
+        line: line,
+        column: column
+      },
+    });
+
+    const lines = token.data.split(/\r\n|\r|\n/)
+    line += lines.length - 1
+    column = lines.length > 1 ?
+      lines[lines.length - 1].length :
+      (column + token.data.length)
   })
+
+  const src = output.join('')
+  const mapJSON = map.toString()
+  const mapComment = convert.fromJSON(mapJSON).toComment()
+
+  return src + '\n' + mapComment
+}
+
+module.exports = function (deps, opts) {
+  // return inject(Bundle(deps, opts).src, {
+  //   GLSLIFY: 1
+  // })
+  return Bundle(deps, opts).src
 }
 
 function Bundle (deps) {
@@ -44,7 +87,7 @@ function Bundle (deps) {
   }
 
   this.src = string(this.src)
-  this.src = string(clean(trim(tokenize(this.src))))
+  // this.src = string(clean(trim(tokenize(this.src))))
 }
 
 var proto = Bundle.prototype
@@ -59,6 +102,14 @@ proto.preprocess = function (dep) {
 
   for (var i = 0; i < tokens.length; i++) {
     var token = tokens[i]
+    token.source = dep.file
+
+    // Save original position
+    token.original = {
+      line: token.line,
+      column: Math.max(token.column - token.data.length + 1, 0)
+    }
+
     if (token.type !== 'preprocessor') continue
     if (!glslifyPreprocessor(token.data)) continue
 

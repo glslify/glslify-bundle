@@ -13,6 +13,7 @@
     "url": "http://hughsk.io/"
   },
   "dependencies": {
+    "convert-source-map": "^1.5.0",
     "glsl-inject-defines": "^1.0.1",
     "glsl-token-defines": "^1.0.0",
     "glsl-token-depth": "^1.1.1",
@@ -22,13 +23,15 @@
     "glsl-token-whitespace-trim": "^1.0.0",
     "glsl-tokenizer": "^2.0.2",
     "murmurhash-js": "^1.0.0",
-    "shallow-copy": "0.0.1"
+    "shallow-copy": "0.0.1",
+    "source-map": "^0.5.6"
   },
   "devDependencies": {
-    "gl": "^2.1.5",
+    "gl": "^4.0.3",
     "gl-shader": "^4.0.6",
     "glslify-deps": "^1.2.1",
     "standard": "^5.4.1",
+    "tap-spec": "^4.1.1",
     "tape": "^3.5.0"
   },
   "repository": {
