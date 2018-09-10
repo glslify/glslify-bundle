@@ -26,10 +26,11 @@
     "shallow-copy": "0.0.1"
   },
   "devDependencies": {
-    "gl": "^2.1.5",
+    "gl": "^4.0.4",
     "gl-shader": "^4.0.6",
     "glslify-deps": "^1.2.1",
     "standard": "^5.4.1",
+    "tap-spec": "^5.0.0",
     "tape": "^3.5.0"
   },
   "repository": {
