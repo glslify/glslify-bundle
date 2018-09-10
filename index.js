@@ -12,6 +12,8 @@ var scope = require('glsl-token-scope')
 var depth = require('glsl-token-depth')
 var topoSort = require('./lib/topo-sort')
 var copy = require('shallow-copy')
+var findup = require('@choojs/findup')
+var path = require('path')
 
 module.exports = function (deps) {
   return inject(Bundle(deps).src, {
@@ -39,7 +41,16 @@ function Bundle (deps) {
 
   for (var i = 0; i < deps.length; i++) {
     if (deps[i].entry) {
-      this.src = this.src.concat(this.bundle(deps[i]))
+      var allowMultipleRequire
+      try {
+        var fileDir = path.dirname(deps[i].file)
+        var pkgDir = findup.sync(fileDir, 'package.json')
+        var pkgInfo = require(path.join(pkgDir, 'package.json'))
+        allowMultipleRequire = (pkgInfo && pkgInfo.glslify && pkgInfo.glslify.allowMultipleRequire) || false
+      } catch (e) {
+        allowMultipleRequire = false
+      }
+      this.src = this.src.concat(this.bundle(deps[i], allowMultipleRequire))
     }
   }
 
@@ -107,7 +118,7 @@ proto.preprocess = function (dep) {
   }
 }
 
-proto.bundle = function (entry) {
+proto.bundle = function (entry, allowMultipleRequire) {
   var resolved = {}
   var result = resolve(entry, [])[1]
 
@@ -125,7 +136,7 @@ proto.bundle = function (entry) {
 
     // Test if export is already resolved
     var exportName = dep.parsed.exports + suffix
-    if (resolved[exportName]) {
+    if (resolved[exportName] && !allowMultipleRequire) {
       return [exportName, []]
     }
 
