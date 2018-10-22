@@ -25,7 +25,7 @@ test('lazy variable rename check', function (t) {
     t.equal(src.match(/b\.color/g).length, 1, '1 occurence of b.color')
     t.equal(src.match(/b\.position/g).length, 2, '2 occurences of b.position')
     t.equal(src.match(/sibling/g).length, 2, '2 occurences of sibling')
-    t.equal(src.match(/\#define GLSLIFY 1/g).length, 1, '1 occurences of #define GLSLIFY 1')
+    t.equal(src.match(/#define GLSLIFY 1/g).length, 1, '1 occurences of #define GLSLIFY 1')
 
     t.end()
   })

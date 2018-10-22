@@ -6,7 +6,7 @@ var gl
 
 var vert = fs.readFileSync(
   path.join(__dirname, '..', '..', 'fixtures', 'square.vert')
-, 'utf8')
+  , 'utf8')
 
 module.exports = function (source) {
   gl = gl || GL(2, 2)

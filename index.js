@@ -1,4 +1,4 @@
-/*eslint-disable no-redeclare */
+/* eslint-disable no-redeclare */
 
 var hash = require('murmurhash-js/murmurhash3_gc')
 var trim = require('glsl-token-whitespace-trim')
@@ -156,7 +156,7 @@ proto.bundle = function (entry) {
 
         // properties (uVec.x, ray.origin, ray.origin.xy etc.) should
         // have their host identifiers renamed
-        var parent = value.match(/^([^\.]+)\.(.+)$/)
+        var parent = value.match(/^([^.]+)\.(.+)$/)
         if (parent) {
           return [id, (rename[parent[1]] || (parent[1] + suffix)) + '.' + parent[2]]
         }
@@ -201,11 +201,11 @@ function glslifyPreprocessor (data) {
 }
 
 function glslifyExport (data) {
-  return /#pragma glslify:\s*export\(([^\)]+)\)/.exec(data)
+  return /#pragma glslify:\s*export\(([^)]+)\)/.exec(data)
 }
 
 function glslifyImport (data) {
-  return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^\)]+)\)/.exec(data)
+  return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^)]+)\)/.exec(data)
 }
 
 function indexBy (deps, key) {
