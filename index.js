@@ -57,9 +57,13 @@ proto.preprocess = function (dep) {
   depth(tokens)
   scope(tokens)
 
+  var conditionalDepth = 0
+
   for (var i = 0; i < tokens.length; i++) {
     var token = tokens[i]
     if (token.type !== 'preprocessor') continue
+    if (openIfDirective(token.data)) { conditionalDepth++; continue }
+    if (closeIfDirective(token.data)) { conditionalDepth--; continue }
     if (!glslifyPreprocessor(token.data)) continue
 
     var exported = glslifyExport(token.data)
@@ -81,7 +85,8 @@ proto.preprocess = function (dep) {
         path: path,
         target: target,
         maps: toMapping(maps),
-        index: i
+        index: i,
+        standalone: conditionalDepth > 0
       })
       tokens.splice(i--, 1)
     }
@@ -109,14 +114,18 @@ proto.preprocess = function (dep) {
 
 proto.bundle = function (entry) {
   var resolved = {}
-  var result = resolve(entry, [])[1]
+  var result = resolve(entry, [], -1, false)[1]
 
   return result
 
-  function resolve (dep, bindings) {
-    // Compute suffix for module
+  function resolve (dep, bindings, importerId, isStandalone) {
     bindings.sort()
-    var ident = bindings.join(':') + ':' + dep.id
+
+    // Compute suffix for module. This will be unique for each combination
+    // of bindings and module id. "Standalone" modules will also be unique
+    // for each importer.
+    var version = isStandalone ? importerId : -1
+    var ident = bindings.concat([dep.id, version]).join(':')
     var suffix = '_' + hash(ident)
 
     if (dep.entry) {
@@ -164,7 +173,7 @@ proto.bundle = function (entry) {
         return [id, rename[value] || (value + suffix)]
       })
 
-      var importTokens = resolve(importTarget, importBindings)
+      var importTokens = resolve(importTarget, importBindings, dep.id, data.standalone)
       rename[importName] = importTokens[0]
       edits.push([data.index, importTokens[1]])
     }
@@ -194,6 +203,14 @@ proto.bundle = function (entry) {
     resolved[exportName] = true
     return [exportName, tokens]
   }
+}
+
+function openIfDirective (data) {
+  return /#if|#ifdef|#ifndef/.test(data)
+}
+
+function closeIfDirective (data) {
+  return /#endif/.test(data)
 }
 
 function glslifyPreprocessor (data) {
