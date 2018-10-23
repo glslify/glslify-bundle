@@ -10,6 +10,5 @@ var vert = fs.readFileSync(
 
 module.exports = function (source) {
   gl = gl || GL(2, 2)
-  if (!gl) throw new Error('Unable to initialise WebGL context')
   return Shader(gl, vert, source)
 }
