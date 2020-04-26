@@ -77,9 +77,9 @@ proto.preprocess = function (dep) {
         .replace(/^"|"$/g, '')
       var target = this.depIndex[dep.deps[path]]
       imports.push({
-        name: name,
-        path: path,
-        target: target,
+        name,
+        path,
+        target,
         maps: toMapping(maps),
         index: i
       })
@@ -101,9 +101,9 @@ proto.preprocess = function (dep) {
   }
 
   dep.parsed = {
-    tokens: tokens,
-    imports: imports,
-    exports: exports
+    tokens,
+    imports,
+    exports
   }
 }
 
