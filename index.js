@@ -197,15 +197,15 @@ proto.bundle = function (entry) {
 }
 
 function glslifyPreprocessor (data) {
-  return /#pragma glslify:/.test(data)
+  return /#pragma glslify\s?:/.test(data)
 }
 
 function glslifyExport (data) {
-  return /#pragma glslify:\s*export\(([^)]+)\)/.exec(data)
+  return /#pragma glslify\s?:\s*export\(([^)]+)\)/.exec(data)
 }
 
 function glslifyImport (data) {
-  return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^)]+)\)/.exec(data)
+  return /#pragma glslify\s?:\s*([^=\s]+)\s*=\s*require\(([^)]+)\)/.exec(data)
 }
 
 function indexBy (deps, key) {
